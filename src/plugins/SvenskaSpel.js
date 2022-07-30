@@ -1,19 +1,31 @@
+const Axios = require('axios');
 const Crypto = require('crypto');
 const WebSocket = require('ws');
 
-const webSocketUrl = `wss://sbapi.sbtech.com/svenskaspel/sportscontent/sportsbook/v1/Websocket?jwt=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NTkxNzMyNDIsImlzcyI6IlN2ZW5za2FTcGVsX1Byb2RSIiwiU2l0ZUlkIjozNjYsIklzQW5vbnltb3VzIjp0cnVlLCJTZXNzaW9uSWQiOiIzZmUyM2Y0Yi1hNTliLTQ0ZGItYjQxNS1hODZjNjRmNGQwY2UiLCJuYmYiOjE2NTkxNjYwNDIsImlhdCI6MTY1OTE2NjA0Mn0.Opf5KEfUN3spfLpBML0DAblGDPCZYOlxnO3fuINVBagGVA2gFTCG8mkkjB7XQfU0zf8OUxyqYfCScIaKnLZCJcEFUzopHRVUb0E3dcGGX-pI_hSys7X4mypRJo9C38A9IXu2dI-Iydmw3HR7j2k71qyFoTttpeU0d_XOxaxiW7H7YUHPazcTtpQcMMjpA05Yld5mDzD5-iQm5Dt1icl_K3Qf2PanwFrWl90J5wpy67wFoFG7AN9u54KE5cE0kkuk8o5lOG6ffyi3MPIY55S4QFEKf5SAM0GhzED5v__amjWVtkYJNDWEZioe7n9WepF_GxrGZwbtfvgjBy7WJiVhoA&locale=se`;
-
 module.exports = new (class SvenskaSpel {
   constructor() {
-    const webSocket = new WebSocket(webSocketUrl);
     this.webSocketMessageProcessors = new Map();
 
-    webSocket.addEventListener('open', this._onWebSocketOpen.bind(this));
-    webSocket.addEventListener('message', this._onWebSocketMessage.bind(this));
-    webSocket.addEventListener('error', this._onWebSocketError.bind(this));
-    webSocket.addEventListener('close', this._onWebSocketClose.bind(this));
+    const self = this;
 
-    this.webSocket = webSocket;
+    (async () => {
+      const { data } = await Axios.post('https://sbapi.sbtech.com/svenskaspel/auth/v2/anonymous', null, {
+        headers: {
+          domainid: 'Sj9RYJD8NcNQkvK1q94G',
+        },
+      });
+
+      const webSocketUrl = `wss://sbapi.sbtech.com/svenskaspel/sportscontent/sportsbook/v1/Websocket?jwt=${data.jwt}&locale=se`;
+
+      const webSocket = new WebSocket(webSocketUrl);
+
+      webSocket.addEventListener('open', self._onWebSocketOpen.bind(self));
+      webSocket.addEventListener('message', self._onWebSocketMessage.bind(self));
+      webSocket.addEventListener('error', self._onWebSocketError.bind(self));
+      webSocket.addEventListener('close', self._onWebSocketClose.bind(self));
+
+      self.webSocket = webSocket;
+    })();
   }
 
   _onWebSocketOpen() {}
